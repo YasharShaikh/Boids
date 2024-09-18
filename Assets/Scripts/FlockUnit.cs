@@ -27,8 +27,8 @@ public class FlockUnit : MonoBehaviour
     }
     void Start()
     {
-        var cohesionVector = CalculateCohesionVector(); // cohesian refers to how closely the other gameobjects are to each other in this reference
-        var alignmentVector = CalculateAlignmentVector();
+        //var cohesionVector = CalculateCohesionVector(); // cohesian refers to how closely the other gameobjects are to each other in this reference
+        //var alignmentVector = CalculateAlignmentVector();
     }
 
     public void InitializeSpeed(float speed)
@@ -88,7 +88,7 @@ public class FlockUnit : MonoBehaviour
     {
         var avoidancetVector = Vector3.zero;
         if (avoidanceNeighbour.Count == 0)
-            return avoidancetVector;
+            return myTransform.forward;
         int neighboursInFOV = 0;
         for (int i = 0; i < avoidanceNeighbour.Count; i++)
         {
@@ -110,11 +110,11 @@ public class FlockUnit : MonoBehaviour
     {
         var cohesionVector = Vector3.zero;
 
-        //if (cohesionNeighbour.Count == 0)
-        //{
-        //    Debug.Log("Alone:" + assignedFlock.gameObject.name);
-        //    return cohesionVector;
-        //}
+        if (cohesionNeighbour.Count == 0)
+        {
+            Debug.Log("Alone:" + assignedFlock.gameObject.name);
+            return cohesionVector;
+        }
 
         int neightboursInFOV = 0;
         for (int i = 0; i < cohesionNeighbour.Count; i++)
@@ -138,7 +138,6 @@ public class FlockUnit : MonoBehaviour
         var aligmentVector = myTransform.forward;
         if (alignmentNeighbour.Count == 0)
         {
-            Debug.Log("Alone:"+this.gameObject.name);
             return aligmentVector;
         }
         int neighboursInFOV = 0;
