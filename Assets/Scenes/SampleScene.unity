@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
+  m_IndirectSpecularColor: {r: 0.44402242, g: 0.49316543, b: 0.5722324, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -338,15 +338,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 200745dd90ef4de42ab95904efc9d742, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  UnitPrefab: {fileID: 2746380201858316190, guid: 8e46270de294e884d99d4a5dc9d9d390, type: 3}
-  flockSize: 20
+  UnitPrefab: {fileID: 19033996833008438, guid: b37352ca74447db4b8f2ca41a84b1a76, type: 3}
+  flockSize: 100
   spawnBounds: {x: 10, y: 5, z: 10}
   _minSpeed: 2
   _maxSpeed: 4
-  _cohesionDistance: 5
+  _cohesionDistance: 10
   _avoidanceDistance: 1
   _alignmentDistance: 1
-  _boundstDistance: 20
+  _boundstDistance: 5
   _cohesionWeights: 1
   _avoidanceWeights: 1
   _alignmentWeights: 1

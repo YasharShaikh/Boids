@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class FlockUnit : MonoBehaviour
@@ -39,10 +37,10 @@ public class FlockUnit : MonoBehaviour
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(transform.position, assignedFlock.cohesionDisntace);
+        Gizmos.DrawWireSphere(transform.position, assignedFlock.cohesionDistance);
 
         Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, assignedFlock.avoidanceDisntace);
+        Gizmos.DrawWireSphere(transform.position, assignedFlock.avoidanceDistance);
 
     }
 
@@ -51,18 +49,18 @@ public class FlockUnit : MonoBehaviour
         FindNeighbour();
         CalculateSpeed();
         var cohesionVector = CalculateCohesionVector() * assignedFlock.cohesionWeights;
-        var aligmentVector = CalculateAlignmentVector() * assignedFlock.alignemntWeights;
         var avoidanceVector = CalculateAvoidanceVector() * assignedFlock.avoidanceWeights;
-        //var boundsVector = CalculateBoundsVector() * assignedFlock.boundsWeights;
+        var aligementVector = CalculateAlignmentVector() * assignedFlock.alignemntWeights;
+        var boundsVector = CalculateBoundsVector() * assignedFlock.boundsWeights;
 
-        if (cohesionVector != Vector3.zero)
-        {
-            var moveVector = cohesionVector + aligmentVector + avoidanceVector/* + boundsVector*/;
-            moveVector = Vector3.SmoothDamp(myTransform.forward, moveVector, ref currentVelocity, smoothDamp);
-            moveVector = moveVector.normalized * speed;
-            myTransform.forward = moveVector;
-            myTransform.position += moveVector * Time.deltaTime;
-        }
+        var moveVector = cohesionVector + avoidanceVector + aligementVector + boundsVector;
+        moveVector = Vector3.SmoothDamp(myTransform.forward, moveVector, ref currentVelocity, smoothDamp);
+        moveVector = moveVector.normalized * speed;
+        if (moveVector == Vector3.zero)
+            moveVector = transform.forward;
+
+        myTransform.forward = moveVector;
+        myTransform.position += moveVector * Time.deltaTime;
 
     }
 
@@ -72,13 +70,12 @@ public class FlockUnit : MonoBehaviour
 
         if (cohesionNeighbour.Count == 0)
             return;
-
         speed = 0;
-
         for (int i = 0; i < cohesionNeighbour.Count; i++)
         {
             speed += cohesionNeighbour[i].speed;
         }
+
         speed /= cohesionNeighbour.Count;
         speed = Mathf.Clamp(speed, assignedFlock.minSpeed, assignedFlock.maxSpeed);
     }
@@ -86,24 +83,22 @@ public class FlockUnit : MonoBehaviour
 
     private Vector3 CalculateAvoidanceVector()
     {
-        var avoidancetVector = Vector3.zero;
+        var avoidanceVector = Vector3.zero;
         if (avoidanceNeighbour.Count == 0)
-            return myTransform.forward;
+            return Vector3.zero;
         int neighboursInFOV = 0;
         for (int i = 0; i < avoidanceNeighbour.Count; i++)
         {
             if (IsInFOV(avoidanceNeighbour[i].myTransform.position))
             {
                 neighboursInFOV++;
-                avoidancetVector += (myTransform.position - avoidanceNeighbour[i].myTransform.position);
+                avoidanceVector += myTransform.position - avoidanceNeighbour[i].myTransform.position;
             }
-            //else the Unit should look for nearest flock to join 
         }
-        if (neighboursInFOV == 0)
-            return myTransform.forward;
-        avoidancetVector /= neighboursInFOV;
-        avoidancetVector = avoidancetVector.normalized;
-        return avoidancetVector;
+
+        avoidanceVector /= neighboursInFOV;
+        avoidanceVector = avoidanceVector.normalized;
+        return avoidanceVector;
     }
 
     private Vector3 CalculateCohesionVector()
@@ -111,52 +106,41 @@ public class FlockUnit : MonoBehaviour
         var cohesionVector = Vector3.zero;
 
         if (cohesionNeighbour.Count == 0)
-        {
-            Debug.Log("Alone:" + assignedFlock.gameObject.name);
-            return cohesionVector;
-        }
+            return Vector3.zero;
 
-        int neightboursInFOV = 0;
+        int neighboursInFOV = 0;
         for (int i = 0; i < cohesionNeighbour.Count; i++)
         {
             if (IsInFOV(cohesionNeighbour[i].myTransform.position))
             {
-                neightboursInFOV++;
+                neighboursInFOV++;
                 cohesionVector += cohesionNeighbour[i].myTransform.position;
             }
         }
-        if (neightboursInFOV > 0)
-        {
-            cohesionVector /= neightboursInFOV;
-            cohesionVector -= myTransform.position;
-        }
+        cohesionVector /= neighboursInFOV;
+        cohesionVector -= myTransform.position;
+        cohesionVector = cohesionVector.normalized;
         //cohesionVector.Normalize();
         return cohesionVector;
     }
     private Vector3 CalculateAlignmentVector()
     {
-        var aligmentVector = myTransform.forward;
+        var aligementVector = myTransform.forward;
         if (alignmentNeighbour.Count == 0)
-        {
-            return aligmentVector;
-        }
+            return myTransform.forward;
         int neighboursInFOV = 0;
         for (int i = 0; i < alignmentNeighbour.Count; i++)
         {
             if (IsInFOV(alignmentNeighbour[i].myTransform.position))
             {
                 neighboursInFOV++;
-                aligmentVector += alignmentNeighbour[i].myTransform.forward;
+                aligementVector += alignmentNeighbour[i].myTransform.forward;
             }
-            //else the Unit should look for nearest flock to join 
         }
 
-        if (neighboursInFOV == 0)
-            return myTransform.forward;
-
-        aligmentVector /= neighboursInFOV;
-        aligmentVector = aligmentVector.normalized;
-        return aligmentVector;
+        aligementVector /= neighboursInFOV;
+        aligementVector = aligementVector.normalized;
+        return aligementVector;
 
     }
 
@@ -165,14 +149,16 @@ public class FlockUnit : MonoBehaviour
     private Vector3 CalculateBoundsVector()
     {
         var offsetToCenter = assignedFlock.transform.position - myTransform.position;
-        bool isNearCenter = (offsetToCenter.magnitude    >= assignedFlock.boundsDistance * 0.9f);
+        bool isNearCenter = offsetToCenter.magnitude >= assignedFlock.boundsDistance * 0.9f;
         return isNearCenter ? offsetToCenter.normalized : Vector3.zero;
     }
 
     private bool IsInFOV(Vector3 position)
     {
-        float angle = Vector3.Angle(myTransform.forward, position - myTransform.position);
-        return angle < FOV && Vector3.Distance(position, myTransform.position) <= assignedFlock.cohesionDisntace;
+
+        return Vector3.Angle(myTransform.forward, position - myTransform.position) <= FOV;
+        //float angle = Vector3.Angle(myTransform.forward, position - myTransform.position);
+        //return angle < FOV && Vector3.Distance(position, myTransform.position) <= assignedFlock.cohesionDisntace;
     }
 
     public void AssignFlock(Flock flock)
@@ -183,7 +169,7 @@ public class FlockUnit : MonoBehaviour
     {
         cohesionNeighbour.Clear();
         alignmentNeighbour.Clear(); // Also clear the alignment neighbors list
-
+        avoidanceNeighbour.Clear();
         var allUnits = assignedFlock.allUnits;
         for (int i = 0; i < allUnits.Length; i++)
         {
@@ -191,16 +177,17 @@ public class FlockUnit : MonoBehaviour
             if (currentUnit != null && currentUnit != this) // Ensure the unit doesn't add itself
             {
                 float currentNeighbourDistanceSqrt = Vector3.SqrMagnitude(currentUnit.transform.position - myTransform.position);
-                if (currentNeighbourDistanceSqrt <= assignedFlock.cohesionDisntace * assignedFlock.cohesionDisntace)
+                if (currentNeighbourDistanceSqrt <= assignedFlock.cohesionDistance * assignedFlock.cohesionDistance)
                 {
                     cohesionNeighbour.Add(currentUnit);
                 }
-                if(currentNeighbourDistanceSqrt<=assignedFlock.alignemntDisntace * assignedFlock.alignemntDisntace)
+                if (currentNeighbourDistanceSqrt <= assignedFlock.alignemntDistance * assignedFlock.alignemntDistance)
                 {
                     alignmentNeighbour.Add(currentUnit); // Add to both lists
                 }
-                if (currentNeighbourDistanceSqrt <= assignedFlock.avoidanceDisntace * assignedFlock.avoidanceDisntace)
+                if (currentNeighbourDistanceSqrt <= assignedFlock.avoidanceDistance * assignedFlock.avoidanceDistance)
                 {
+                    avoidanceNeighbour.Add(currentUnit);
                 }
 
             }

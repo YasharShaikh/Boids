@@ -21,14 +21,14 @@ public class Flock : MonoBehaviour
 
     [Header("Detection Distance")]
     [SerializeField] float _cohesionDistance;
-    public float cohesionDisntace { get { return _cohesionDistance; } }
+    public float cohesionDistance { get { return _cohesionDistance; } }
     [SerializeField] float _avoidanceDistance;
-    public float avoidanceDisntace { get { return _avoidanceDistance; } }
+    public float avoidanceDistance { get { return _avoidanceDistance; } }
     [SerializeField] float _alignmentDistance;
-    public float alignemntDisntace { get { return _alignmentDistance; } }
+    public float alignemntDistance { get { return _alignmentDistance; } }
 
     [SerializeField] float _boundstDistance;
-    public float boundsDistance { get { return boundsDistance; } }
+    public float boundsDistance { get { return _boundstDistance; } }
 
 
 
@@ -41,9 +41,12 @@ public class Flock : MonoBehaviour
     public float alignemntWeights { get { return _alignmentWeights; } }
 
     [SerializeField] float _boundstWeights;
-    public float boundsWeights { get { return boundsWeights; } }
+    public float boundsWeights { get { return _boundstWeights; } }
+
+
 
     public FlockUnit[] allUnits { get; set; }
+ 
 
 
 
